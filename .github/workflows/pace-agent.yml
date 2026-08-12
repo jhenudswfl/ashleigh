@@ -7,6 +7,9 @@ on:
     - cron: "0 11 * * 1"
   workflow_dispatch: {}   # lets you run it manually from the Actions tab
 
+permissions:
+  contents: write   # needed to commit history.json + docs/dashboard.html back
+
 jobs:
   run:
     runs-on: ubuntu-latest
