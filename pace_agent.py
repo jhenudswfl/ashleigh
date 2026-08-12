@@ -94,10 +94,15 @@ def fetch_meta(since, until):
     spend, leads = 0.0, 0
     for row in data.get("data", []):
         spend += float(row.get("spend", 0))
+        # Meta reports the same lead conversions under multiple action_types
+        # (e.g. "lead" and "onsite_conversion.lead_grouped" both count the
+        # identical events) — take the best single count per row, don't sum them.
+        row_leads = 0
         for a in row.get("actions", []) or []:
             if a.get("action_type") in ("lead", "onsite_conversion.lead_grouped",
                                         "offsite_conversion.fb_pixel_lead"):
-                leads += int(float(a.get("value", 0)))
+                row_leads = max(row_leads, int(float(a.get("value", 0))))
+        leads += row_leads
     return spend, leads
 
 
