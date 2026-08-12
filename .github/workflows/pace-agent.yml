@@ -30,6 +30,7 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           DIGEST_EMAIL_TO: ${{ secrets.DIGEST_EMAIL_TO }}
           LOOKBACK_DAYS: "14"
+          CAMPAIGN_START_DATE: "2026-08-11"
         run: python pace_agent.py
       - name: Commit updated dashboard + history
         run: |

@@ -53,6 +53,11 @@ PRICE_GATE_DAYS   = 30
 
 # Reporting window
 LOOKBACK_DAYS     = int(os.environ.get("LOOKBACK_DAYS", "14"))
+# If set, the window never starts earlier than this date — so right after an
+# ad relaunch the report doesn't pull in stale pre-relaunch data. The window
+# grows day by day and naturally caps at the normal LOOKBACK_DAYS rolling
+# window once CAMPAIGN_START_DATE is more than LOOKBACK_DAYS in the past.
+CAMPAIGN_START_DATE = os.environ.get("CAMPAIGN_START_DATE", "")
 
 # Digest delivery (either or both)
 DIGEST_SMS_CONTACT_ID = os.environ.get("DIGEST_SMS_CONTACT_ID", "")  # GHL contact ID for Jhen
@@ -66,7 +71,9 @@ GHL_BASE = "https://services.leadconnectorhq.com"
 
 
 def http_json(url, headers=None, data=None, method="GET"):
-    req = request.Request(url, headers=headers or {}, method=method)
+    headers = dict(headers or {})
+    headers.setdefault("User-Agent", "ashleigh-pace-agent/1.0")
+    req = request.Request(url, headers=headers, method=method)
     if data is not None:
         req.data = json.dumps(data).encode()
         req.add_header("Content-Type", "application/json")
@@ -111,47 +118,61 @@ def fetch_pipeline_stages():
     raise RuntimeError("Pipeline not found — check GHL_PIPELINE_ID")
 
 
+def _search_opportunities_pages(extra_params):
+    """Cursor-paginate /opportunities/search (this endpoint ignores `page` past
+    page 1 — real pagination is via the startAfter/startAfterId cursor the API
+    returns in `meta`). Yields each page's opportunity list, newest-created first."""
+    cursor = {}
+    while True:
+        params = {"location_id": GHL_LOCATION_ID, "pipeline_id": GHL_PIPELINE_ID,
+                   "limit": 100, **extra_params, **cursor}
+        data = http_json(f"{GHL_BASE}/opportunities/search?{parse.urlencode(params)}",
+                          ghl_headers())
+        batch = data.get("opportunities", [])
+        if not batch:
+            return
+        yield batch
+        meta = data.get("meta", {})
+        start_after, start_after_id = meta.get("startAfter"), meta.get("startAfterId")
+        if len(batch) < 100 or start_after is None:
+            return
+        cursor = {"startAfter": start_after, "startAfterId": start_after_id}
+
+
 def fetch_open_pipeline(stages):
     """All OPEN opportunities regardless of created date:
     upcoming consults on the books + total open pipeline value."""
     consult_id = stages.get(STAGE_CONSULT_BOOKED.strip().lower())
-    upcoming, open_value, page = 0, 0.0, 1
-    while True:
-        q = parse.urlencode({"location_id": GHL_LOCATION_ID,
-                             "pipeline_id": GHL_PIPELINE_ID,
-                             "status": "open", "limit": 100, "page": page})
-        data = http_json(f"{GHL_BASE}/opportunities/search?{q}", ghl_headers())
-        batch = data.get("opportunities", [])
+    upcoming, open_value = 0, 0.0
+    for batch in _search_opportunities_pages({"status": "open"}):
         for o in batch:
             open_value += float(o.get("monetaryValue") or 0)
             if o.get("pipelineStageId") == consult_id:
                 upcoming += 1
-        if len(batch) < 100:
-            break
-        page += 1
     return upcoming, open_value
 
 
 def fetch_opportunities(since_iso):
-    """All opportunities created in window, paginated."""
-    opps, page = [], 1
-    while True:
-        q = parse.urlencode({"location_id": GHL_LOCATION_ID,
-                             "pipeline_id": GHL_PIPELINE_ID,
-                             "date": since_iso, "limit": 100, "page": page})
-        data = http_json(f"{GHL_BASE}/opportunities/search?{q}", ghl_headers())
-        batch = data.get("opportunities", [])
-        opps.extend(batch)
-        if len(batch) < 100:
+    """All opportunities created on/after since_iso. The search endpoint has no
+    server-side date filter (a `date` param 400s), so this pages newest-first
+    and stops as soon as it crosses the window boundary."""
+    opps = []
+    for batch in _search_opportunities_pages({}):
+        stop = False
+        for o in batch:
+            if o.get("createdAt", "") < since_iso:
+                stop = True
+                break
+            opps.append(o)
+        if stop:
             break
-        page += 1
     return opps
 
 
 # ----------------------------------------------------------------------------
 # 3. KPI computation
 # ----------------------------------------------------------------------------
-def compute(spend, meta_leads, opps, stages):
+def compute(spend, meta_leads, opps, stages, days_in_window):
     consult_stage_id = stages.get(STAGE_CONSULT_BOOKED.strip().lower())
     won_stage_id     = stages.get(STAGE_WON.strip().lower())
 
@@ -179,7 +200,6 @@ def compute(spend, meta_leads, opps, stages):
     romi = biz_margin / spend if spend else 0
     reinvest_owed = booked_days * COST_PER_BOOKED_DAY
 
-    days_in_window = LOOKBACK_DAYS
     daily_spend = spend / days_in_window
     booked_days_per_mo = booked_days / days_in_window * 30
     net_backlog_growth = booked_days_per_mo - CREW_DAYS_PER_MO
@@ -303,12 +323,15 @@ def send_email(text, since, until):
 def main():
     until = dt.date.today()
     since = until - dt.timedelta(days=LOOKBACK_DAYS)
+    if CAMPAIGN_START_DATE:
+        since = max(since, dt.date.fromisoformat(CAMPAIGN_START_DATE))
     s, u = since.isoformat(), until.isoformat()
+    days_in_window = max((until - since).days, 1)
 
     spend, meta_leads = fetch_meta(s, u)
     stages = fetch_pipeline_stages()
     opps = fetch_opportunities(s + "T00:00:00Z")
-    k = compute(spend, meta_leads, opps, stages)
+    k = compute(spend, meta_leads, opps, stages, days_in_window)
     k["upcoming_consults"], k["pipeline_value"] = fetch_open_pipeline(stages)
     actions, flags = decide(k)
     digest = build_digest(k, actions, flags, s, u)
