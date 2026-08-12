@@ -1,0 +1,40 @@
+# Save this file at: .github/workflows/pace-agent.yml in your repo
+name: Ashleigh
+
+on:
+  schedule:
+    # Every Monday 7:00 AM Eastern (11:00 UTC during EDT)
+    - cron: "0 11 * * 1"
+  workflow_dispatch: {}   # lets you run it manually from the Actions tab
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run pace agent
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_ACCOUNT_ID: "3179454915545190"
+          GHL_API_TOKEN: ${{ secrets.GHL_API_TOKEN }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
+          GHL_PIPELINE_ID: ${{ secrets.GHL_PIPELINE_ID }}
+          STAGE_CONSULT_BOOKED: "Appointment Booked"
+          STAGE_WON: "Won"
+          DIGEST_SMS_CONTACT_ID: ${{ secrets.DIGEST_SMS_CONTACT_ID }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          DIGEST_EMAIL_TO: ${{ secrets.DIGEST_EMAIL_TO }}
+          LOOKBACK_DAYS: "14"
+        run: python pace_agent.py
+      - name: Commit updated dashboard + history
+        run: |
+          git config user.name "ashleigh"
+          git config user.email "ashleigh@users.noreply.github.com"
+          git add history.json docs/dashboard.html
+          git diff --cached --quiet || git commit -m "Ashleigh update $(date +%F)"
+          git push
