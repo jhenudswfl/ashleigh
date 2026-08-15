@@ -30,5 +30,38 @@
   "flags": [
    "PRICE GATE (manual check): if the calendar shows 30 consecutive days booked with ZERO idle days \u2192 raise day rate 10-15% on new quotes only. 60-90 days booked = second-crew signal, not price."
   ]
+ },
+ {
+  "spend": 403.24,
+  "leads": 24,
+  "consults": 8,
+  "wins": 1,
+  "won_value": 4000.0,
+  "avg_value": 4000.0,
+  "cpl": 16.801666666666666,
+  "cac": 403.24,
+  "booking_rate": 0.3333333333333333,
+  "close_rate_lead": 0.041666666666666664,
+  "close_rate_consult": 0.125,
+  "booked_days": 4.0,
+  "cost_per_booked_day": 100.81,
+  "romi": 2.9758952484872534,
+  "biz_margin": 1200.0,
+  "reinvest_owed": 400.0,
+  "daily_spend": 100.81,
+  "booked_days_per_mo": 30.0,
+  "net_backlog_growth": 12.0,
+  "upcoming_consults": 7,
+  "pipeline_value": 0.0,
+  "date": "2026-08-15",
+  "actions": [
+   "HOLD SPEND \u2014 at ceiling or close rate soft. Ceiling lifts when John takes sales volume.",
+   "REINVEST: $400 owed to ad budget this window ($100 \u00d7 4.0 booked days). Business margin retained after reinvest: $800.",
+   "BACKLOG: growing ~12 days/mo. On pace to hit the 30-day zero-gap price gate in ~2.5 months at this rate."
+  ],
+  "flags": [
+   "\u26a0 Close rate 4% is below the 8% floor on meaningful volume. If this follows a price step, hold price. If not, it's a sales-process issue, not pricing.",
+   "PRICE GATE (manual check): if the calendar shows 30 consecutive days booked with ZERO idle days \u2192 raise day rate 10-15% on new quotes only. 60-90 days booked = second-crew signal, not price."
+  ]
  }
 ]
