@@ -26,6 +26,7 @@ jobs:
           GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
           GHL_PIPELINE_ID: ${{ secrets.GHL_PIPELINE_ID }}
           STAGE_CONSULT_BOOKED: "Appointment Booked"
+          STAGE_CONSULT_DONE: "Consultation Completed"
           STAGE_WON: "Won"
           DIGEST_SMS_CONTACT_ID: ${{ secrets.DIGEST_SMS_CONTACT_ID }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}

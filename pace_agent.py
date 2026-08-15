@@ -38,6 +38,7 @@ GHL_PIPELINE_ID   = os.environ["GHL_PIPELINE_ID"]
 
 # Stage names in your GHL pipeline (edit to match exactly — case-insensitive)
 STAGE_CONSULT_BOOKED = os.environ.get("STAGE_CONSULT_BOOKED", "Consult Booked")
+STAGE_CONSULT_DONE   = os.environ.get("STAGE_CONSULT_DONE", "Consultation Completed")
 STAGE_WON            = os.environ.get("STAGE_WON", "Won")
 
 # Business constants (the agreed model)
@@ -179,12 +180,19 @@ def fetch_opportunities(since_iso):
 # ----------------------------------------------------------------------------
 def compute(spend, meta_leads, opps, stages, days_in_window):
     consult_stage_id = stages.get(STAGE_CONSULT_BOOKED.strip().lower())
+    consult_done_stage_id = stages.get(STAGE_CONSULT_DONE.strip().lower())
+    consult_stage_ids = {consult_stage_id, consult_done_stage_id}
     won_stage_id     = stages.get(STAGE_WON.strip().lower())
 
     leads = max(meta_leads, len(opps))  # GHL count wins if forms bypass Meta lead event
+    # A consult happened if the opportunity is currently sitting in (or passed
+    # through and was lost from) Appointment Booked or Consultation Completed,
+    # or if it won outright (winning implies it consulted).
     consults = sum(1 for o in opps
-                   if o.get("pipelineStageId") == consult_stage_id
-                   or o.get("status") == "won")  # won implies it consulted
+                   if o.get("pipelineStageId") in consult_stage_ids
+                   or o.get("status") == "won"
+                   or (o.get("status") == "lost"
+                       and o.get("pipelineStageId") in consult_stage_ids))
     wins = [o for o in opps if o.get("status") == "won"
             or o.get("pipelineStageId") == won_stage_id]
     won_value = sum(float(o.get("monetaryValue") or 0) for o in wins)
