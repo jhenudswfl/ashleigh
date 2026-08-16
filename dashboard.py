@@ -170,7 +170,7 @@ const tiles=[
   {v:fmtD(cur.avg_value), l:'Avg job value', dd:dlt(cur.avg_value,prev&&prev.avg_value)},
   {v:Math.round(backlog)+' days', l:'Booked out (est.)', dd:''},
   {v:fmtD(cur.daily_spend)+'/day', l:'Current ad spend', dd:''},
-  {v:((cur.close_rate_lead||0)*100).toFixed(0)+'%', l:'Close rate (floor 8%)', dd:dlt(cur.close_rate_lead,prev&&prev.close_rate_lead)},
+  {v:((cur.close_rate_resolved||0)*100).toFixed(0)+'%', l:'Close rate ('+(cur.n_resolved||0)+' resolved, '+(cur.pending_consults||0)+' pending)', dd:dlt(cur.close_rate_resolved,prev&&prev.close_rate_resolved)},
   {v:((cur.booking_rate||0)*100).toFixed(0)+'%', l:'Booking rate', dd:dlt(cur.booking_rate,prev&&prev.booking_rate)},
   {v:fmtD(cur.cpl), l:'CPL (context only)', dd:''},
   {v:cur.upcoming_consults||0, l:'Upcoming consults', dd:dlt(cur.upcoming_consults,prev&&prev.upcoming_consults)},
@@ -194,7 +194,7 @@ new Chart(moneyChart,{type:'bar',data:{labels:H.map(h=>h.date.slice(5)),datasets
 });
 document.querySelector('#histTable tbody').innerHTML=[].concat(H).reverse().map(function(h){
   return '<tr><td>'+h.date+'</td><td>'+fmtD(h.spend)+'</td><td>'+h.leads+'</td><td>'+h.consults+'</td><td>'+h.wins+
-  '</td><td>'+fmtD(h.won_value)+'</td><td>'+((h.close_rate_lead||0)*100).toFixed(0)+'%</td><td>'+fmtD(h.cac)+
+  '</td><td>'+fmtD(h.won_value)+'</td><td>'+((h.close_rate_resolved||0)*100).toFixed(0)+'%</td><td>'+fmtD(h.cac)+
   '</td><td>'+fmtD(h.cost_per_booked_day)+'</td></tr>';}).join('');
 </script>
 </body>

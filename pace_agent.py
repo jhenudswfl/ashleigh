@@ -210,11 +210,18 @@ def compute(spend, meta_leads, opps, stages, days_in_window):
     # A consult happened if the opportunity is currently sitting in (or passed
     # through and was lost from) Appointment Booked or Consultation Completed,
     # or if it won outright (winning implies it consulted).
-    consults = sum(1 for o in opps
-                   if o.get("pipelineStageId") in consult_stage_ids
-                   or o.get("status") == "won"
-                   or (o.get("status") == "lost"
-                       and o.get("pipelineStageId") in consult_stage_ids))
+    is_consult = lambda o: (o.get("pipelineStageId") in consult_stage_ids
+                             or o.get("status") == "won")
+    consult_opps = [o for o in opps if is_consult(o)]
+    consults = len(consult_opps)
+    # Of those consults, how many have actually been run and dispositioned
+    # (won/lost) vs. are still sitting open/pending on the calendar. Blending
+    # pending consults into the close rate makes it look artificially low
+    # right after a batch of appointments gets booked but hasn't happened yet.
+    resolved_consults = [o for o in consult_opps if o.get("status") in ("won", "lost")]
+    n_resolved = len(resolved_consults)
+    pending_consults = consults - n_resolved
+
     wins = [o for o in opps if o.get("status") == "won"
             or o.get("pipelineStageId") == won_stage_id]
     won_value = sum(float(o.get("monetaryValue") or 0) for o in wins)
@@ -224,6 +231,7 @@ def compute(spend, meta_leads, opps, stages, days_in_window):
     booking_rate = consults / leads if leads else 0
     close_rate_lead = n_wins / leads if leads else 0
     close_rate_consult = n_wins / consults if consults else 0
+    close_rate_resolved = n_wins / n_resolved if n_resolved else 0
     cpl = spend / leads if leads else 0
     cac = spend / n_wins if n_wins else 0
     booked_days = won_value / DAY_RATE  # revenue-implied crew days sold
@@ -246,7 +254,9 @@ def compute(spend, meta_leads, opps, stages, days_in_window):
                 cost_per_booked_day=cost_per_booked_day, romi=romi,
                 biz_margin=biz_margin, reinvest_owed=reinvest_owed,
                 daily_spend=daily_spend, booked_days_per_mo=booked_days_per_mo,
-                net_backlog_growth=net_backlog_growth)
+                net_backlog_growth=net_backlog_growth,
+                n_resolved=n_resolved, pending_consults=pending_consults,
+                close_rate_resolved=close_rate_resolved)
 
 
 # ----------------------------------------------------------------------------
@@ -282,10 +292,17 @@ def decide(k):
         actions.append("HOLD SPEND — economics within tolerance of the model.")
 
     # --- Close rate floor ---
-    if k["leads"] >= 20 and k["close_rate_lead"] < CLOSE_RATE_FLOOR:
+    # Gate on resolved consults, not raw lead volume — a fresh batch of booked
+    # appointments that hasn't run yet will drag the blended close rate down
+    # without meaning anything about actual sales performance.
+    if k["n_resolved"] >= 5 and k["close_rate_lead"] < CLOSE_RATE_FLOOR:
         flags.append(f"⚠ Close rate {k['close_rate_lead']:.0%} is below the 8% "
                      "floor on meaningful volume. If this follows a price step, "
                      "hold price. If not, it's a sales-process issue, not pricing.")
+    elif k["pending_consults"] > 0:
+        flags.append(f"{k['pending_consults']} consult(s) booked but not yet "
+                     f"resolved — close rate ({k['close_rate_resolved']:.0%} of "
+                     f"{k['n_resolved']} resolved so far) will firm up as those run.")
 
     # --- Reinvestment ledger ---
     actions.append(f"REINVEST: ${k['reinvest_owed']:.0f} owed to ad budget this "
@@ -318,7 +335,8 @@ def build_digest(k, actions, flags, since, until):
          f"Spend: ${k['spend']:.0f} (${k['daily_spend']:.0f}/day)",
          f"Leads: {k['leads']}  |  CPL: ${k['cpl']:.0f} (reported, not a decision metric)",
          f"Consults booked: {k['consults']}  ({k['booking_rate']:.0%} of leads)",
-         f"Wins: {k['wins']}  |  Close: {k['close_rate_lead']:.0%} of leads / {k['close_rate_consult']:.0%} of consults",
+         f"Wins: {k['wins']}  |  Close: {k['close_rate_lead']:.0%} of leads / {k['close_rate_consult']:.0%} of consults "
+         f"({k['close_rate_resolved']:.0%} of {k['n_resolved']} resolved, {k['pending_consults']} pending)",
          f"Won value: ${k['won_value']:,.0f}  |  Avg project: ${k['avg_value']:,.0f}",
          f"CAC: ${k['cac']:.0f}  |  Cost per booked day: ${k['cost_per_booked_day']:.0f} (model: $100)",
          f"Booked days sold: {k['booked_days']:.1f}  (~{k['booked_days_per_mo']:.0f}/mo vs {CREW_DAYS_PER_MO:.0f} delivered)",
