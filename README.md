@@ -29,7 +29,7 @@ These are hard-coded from the agreed plan. If the plan changes, change the const
 
 **Meta access token.** business.facebook.com → Business Settings → Users → System Users → create one (name it `pace-agent`, Admin not required — Advertiser role on the ad account is enough) → Generate Token → select the ads_read permission → assign the Utter Declutter Ads account (3179454915545190). Copy the token.
 
-**GHL Private Integration token.** GHL → Settings → Private Integrations → Create. Scopes needed: `opportunities.readonly`, `conversations/message.write` (only if you want the SMS digest). Copy the token, your Location ID (Settings → Business Profile), and the Pipeline ID (Settings → Pipelines → click your pipeline, the ID is in the URL).
+**GHL Private Integration token.** GHL → Settings → Private Integrations → Create. Scopes needed: `opportunities.readonly`, `calendars.readonly`, `calendars/events.readonly` (upcoming-consults count reads real calendar bookings, not opportunity stage), `conversations/message.write` (only if you want the SMS digest). Copy the token, your Location ID (Settings → Business Profile), and the Pipeline ID (Settings → Pipelines → click your pipeline, the ID is in the URL).
 
 **Your GHL contact ID** (for the SMS digest): open your own contact record in GHL — the ID is in the URL. Optional; skip if email-only.
 
