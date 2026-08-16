@@ -145,17 +145,39 @@ def _search_opportunities_pages(extra_params):
         cursor = {"startAfter": start_after, "startAfterId": start_after_id}
 
 
-def fetch_open_pipeline(stages):
-    """All OPEN opportunities regardless of created date:
-    upcoming consults on the books + total open pipeline value."""
-    consult_id = stages.get(STAGE_CONSULT_BOOKED.strip().lower())
-    upcoming, open_value = 0, 0.0
+def fetch_open_pipeline():
+    """Total dollar value of all OPEN opportunities, regardless of created date."""
+    open_value = 0.0
     for batch in _search_opportunities_pages({"status": "open"}):
         for o in batch:
             open_value += float(o.get("monetaryValue") or 0)
-            if o.get("pipelineStageId") == consult_id:
-                upcoming += 1
-    return upcoming, open_value
+    return open_value
+
+
+def fetch_calendars():
+    data = http_json(f"{GHL_BASE}/calendars/?locationId={GHL_LOCATION_ID}", ghl_headers())
+    return [c["id"] for c in data.get("calendars", [])]
+
+
+def fetch_upcoming_appointments():
+    """Real calendar bookings, not opportunity stage. Some appointments predate
+    the stage-automation that moves an opportunity into Appointment Booked, so
+    counting by pipeline stage undercounts what's actually on the calendar.
+    Counts future events, across every calendar, that aren't cancelled/invalid."""
+    now = dt.datetime.now(dt.timezone.utc)
+    now_iso = now.isoformat()
+    start_ms = int((now - dt.timedelta(days=1)).timestamp() * 1000)
+    end_ms = int((now + dt.timedelta(days=180)).timestamp() * 1000)
+    count = 0
+    for cal_id in fetch_calendars():
+        q = parse.urlencode({"locationId": GHL_LOCATION_ID, "calendarId": cal_id,
+                             "startTime": start_ms, "endTime": end_ms})
+        data = http_json(f"{GHL_BASE}/calendars/events?{q}", ghl_headers())
+        for e in data.get("events", []):
+            if (e.get("startTime", "") > now_iso
+                    and e.get("appointmentStatus") not in ("cancelled", "invalid")):
+                count += 1
+    return count
 
 
 def fetch_opportunities(since_iso):
@@ -345,7 +367,8 @@ def main():
     stages = fetch_pipeline_stages()
     opps = fetch_opportunities(s + "T00:00:00Z")
     k = compute(spend, meta_leads, opps, stages, days_in_window)
-    k["upcoming_consults"], k["pipeline_value"] = fetch_open_pipeline(stages)
+    k["upcoming_consults"] = fetch_upcoming_appointments()
+    k["pipeline_value"] = fetch_open_pipeline()
     actions, flags = decide(k)
     digest = build_digest(k, actions, flags, s, u)
 
