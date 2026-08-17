@@ -99,5 +99,41 @@
    "7 consult(s) booked but not yet resolved \u2014 close rate (50% of 2 resolved so far) will firm up as those run.",
    "PRICE GATE (manual check): if the calendar shows 30 consecutive days booked with ZERO idle days \u2192 raise day rate 10-15% on new quotes only. 60-90 days booked = second-crew signal, not price."
   ]
+ },
+ {
+  "spend": 538.02,
+  "leads": 38,
+  "consults": 9,
+  "wins": 1,
+  "won_value": 4000.0,
+  "avg_value": 4000.0,
+  "cpl": 14.158421052631578,
+  "cac": 538.02,
+  "booking_rate": 0.23684210526315788,
+  "close_rate_lead": 0.02631578947368421,
+  "close_rate_consult": 0.1111111111111111,
+  "booked_days": 4.0,
+  "cost_per_booked_day": 134.505,
+  "romi": 2.2304003568640574,
+  "biz_margin": 1200.0,
+  "reinvest_owed": 400.0,
+  "daily_spend": 89.67,
+  "booked_days_per_mo": 20.0,
+  "net_backlog_growth": 2.0,
+  "n_resolved": 2,
+  "pending_consults": 7,
+  "close_rate_resolved": 0.5,
+  "upcoming_consults": 11,
+  "pipeline_value": 0.0,
+  "date": "2026-08-17",
+  "actions": [
+   "HOLD SPEND \u2014 economics within tolerance of the model.",
+   "REINVEST: $400 owed to ad budget this window ($100 \u00d7 4.0 booked days). Business margin retained after reinvest: $800.",
+   "BACKLOG: growing ~2 days/mo. On pace to hit the 30-day zero-gap price gate in ~15.0 months at this rate."
+  ],
+  "flags": [
+   "7 consult(s) booked but not yet resolved \u2014 close rate (50% of 2 resolved so far) will firm up as those run.",
+   "PRICE GATE (manual check): if the calendar shows 30 consecutive days booked with ZERO idle days \u2192 raise day rate 10-15% on new quotes only. 60-90 days booked = second-crew signal, not price."
+  ]
  }
 ]
