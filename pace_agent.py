@@ -145,15 +145,6 @@ def _search_opportunities_pages(extra_params):
         cursor = {"startAfter": start_after, "startAfterId": start_after_id}
 
 
-def fetch_open_pipeline():
-    """Total dollar value of all OPEN opportunities, regardless of created date."""
-    open_value = 0.0
-    for batch in _search_opportunities_pages({"status": "open"}):
-        for o in batch:
-            open_value += float(o.get("monetaryValue") or 0)
-    return open_value
-
-
 def fetch_calendars():
     data = http_json(f"{GHL_BASE}/calendars/?locationId={GHL_LOCATION_ID}", ghl_headers())
     return [c["id"] for c in data.get("calendars", [])]
@@ -386,7 +377,6 @@ def main():
     opps = fetch_opportunities(s + "T00:00:00Z")
     k = compute(spend, meta_leads, opps, stages, days_in_window)
     k["upcoming_consults"] = fetch_upcoming_appointments()
-    k["pipeline_value"] = fetch_open_pipeline()
     actions, flags = decide(k)
     digest = build_digest(k, actions, flags, s, u)
 

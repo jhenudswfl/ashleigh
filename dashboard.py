@@ -174,7 +174,7 @@ const tiles=[
   {v:((cur.booking_rate||0)*100).toFixed(0)+'%', l:'Booking rate', dd:dlt(cur.booking_rate,prev&&prev.booking_rate)},
   {v:fmtD(cur.cpl), l:'CPL (context only)', dd:''},
   {v:cur.upcoming_consults||0, l:'Upcoming consults', dd:dlt(cur.upcoming_consults,prev&&prev.upcoming_consults)},
-  {v:fmtD(cur.pipeline_value), l:'Open pipeline value', dd:dlt(cur.pipeline_value,prev&&prev.pipeline_value)},
+  {v:cur.n_resolved||0, l:'Appointments sat', dd:dlt(cur.n_resolved,prev&&prev.n_resolved)},
 ];
 document.getElementById('tiles').innerHTML = tiles.map(function(t){
   return '<div class="tile"><div class="v">'+t.v+'</div><div class="l">'+t.l+'</div>'+t.dd+'</div>';}).join('');
