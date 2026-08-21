@@ -156,14 +156,13 @@ function dlt(now,before,goodUp){
   const good=(dd>0)===(goodUp!==false);
   return '<div class="d ' + (good?'pos':'neg') + '">' + (dd>0?'\u25B2':'\u25BC') + ' vs last week</div>';
 }
-// Estimated days booked out: cumulative days sold minus delivery burn (18/mo) since first snapshot
-var backlog = 0;
-if (H.length) {
-  var totalSold = H.reduce(function(s,h){return s+(h.booked_days||0)},0);
-  var d0 = new Date(H[0].date), d1 = new Date(cur.date);
-  var elapsed = Math.max(0,(d1-d0)/86400000) + 14; // include first window
-  backlog = Math.max(0, totalSold - elapsed*(18/30));
-}
+// Days booked out: revenue-implied crew-days sold since the report window
+// opened (cur.booked_days), none yet confirmed delivered. NOT a sum across
+// snapshots — the window grows from campaign start, so each day's booked_days
+// already includes every prior win; summing them double/triple-counts the
+// same jobs. Once deliveries start, this will overstate backlog until crew
+// scheduling is trackable — see README "Known limits."
+var backlog = cur.booked_days || 0;
 const tiles=[
   {v:fmtD(cur.cac), l:'Cost to win a job (CAC)', dd:dlt(cur.cac,prev&&prev.cac,false)},
   {v:cur.wins||0, l:'Jobs closed', dd:dlt(cur.wins,prev&&prev.wins)},
