@@ -518,5 +518,40 @@
    "\u26a0 Backlog SHRINKING \u2014 booking slower than delivery. You are below breakeven pace ($60/day equivalent).",
    "PRICE GATE (manual check): if the calendar shows 30 consecutive days booked with ZERO idle days \u2192 raise day rate 10-15% on new quotes only. 60-90 days booked = second-crew signal, not price."
   ]
+ },
+ {
+  "spend": 4048.71,
+  "leads": 187,
+  "consults": 48,
+  "wins": 7,
+  "won_value": 10650.0,
+  "avg_value": 1521.4285714285713,
+  "cpl": 21.650855614973263,
+  "cac": 578.3871428571429,
+  "booking_rate": 0.25668449197860965,
+  "close_rate_lead": 0.0374331550802139,
+  "close_rate_consult": 0.14583333333333334,
+  "booked_days": 10.65,
+  "cost_per_booked_day": 380.1605633802817,
+  "romi": 0.7891402446705247,
+  "biz_margin": 3195.0,
+  "reinvest_owed": 1065.0,
+  "daily_spend": 289.19357142857143,
+  "booked_days_per_mo": 22.821428571428573,
+  "net_backlog_growth": 4.821428571428573,
+  "n_resolved": 13,
+  "pending_consults": 35,
+  "close_rate_resolved": 0.5384615384615384,
+  "upcoming_consults": 14,
+  "date": "2026-11-02",
+  "actions": [
+   "REDUCE/HOLD \u2014 cost/booked-day $380 is 2x model. Diagnose in order: (1) consult show rate, (2) close rate vs 8% floor, (3) creative fatigue. Do NOT kill creative on CPL.",
+   "REINVEST: $1065 owed to ad budget this window ($100 \u00d7 10.7 booked days). Business margin retained after reinvest: $2130.",
+   "BACKLOG: growing ~5 days/mo. On pace to hit the 30-day zero-gap price gate in ~6.2 months at this rate."
+  ],
+  "flags": [
+   "\u26a0 Close rate 4% is below the 8% floor on meaningful volume. If this follows a price step, hold price. If not, it's a sales-process issue, not pricing.",
+   "PRICE GATE (manual check): if the calendar shows 30 consecutive days booked with ZERO idle days \u2192 raise day rate 10-15% on new quotes only. 60-90 days booked = second-crew signal, not price."
+  ]
  }
 ]
